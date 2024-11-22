@@ -2,7 +2,8 @@ package aws;
 
 /*
 * Cloud Computing
-* 
+* 2020039100 Yuhyunji
+*
 * Dynamic Resource Management Tool
 * using AWS Java SDK Library
 * 
@@ -35,7 +36,7 @@ import com.amazonaws.services.ec2.model.DescribeImagesResult;
 import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.Filter;
 
-public class awsTest {
+public class Main {
 
 	static AmazonEC2      ec2;
 
