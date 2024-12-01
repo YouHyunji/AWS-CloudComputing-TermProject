@@ -1,11 +1,12 @@
 package aws;
 
 /*
- * 클라우드 컴퓨팅
+ * Cloud Computing
  * 2020039100 Yuhyunji
  *
  * Dynamic Resource Management Tool
  * using AWS Java SDK Library
+ *
  */
 
 import java.util.Iterator;
@@ -31,7 +32,8 @@ public class Main {
         } catch (Exception e) {
             // 자격 증명 로드 실패 시 예외 처리
             throw new AmazonClientException(
-                "자격 증명 파일을 로드할 수 없습니다. 파일 경로를 확인하세요.",
+                "Cannot load the credentials from the credential profiles file. " +
+                "Ensure your credentials file is properly configured.",
                 e);
         }
         // AWS 클라이언트를 설정 (기본 리전: us-east-1)
@@ -53,21 +55,21 @@ public class Main {
         while (true) {
             // 메인 메뉴 표시
             System.out.println("------------------------------------------------------------");
-            System.out.println("           Amazon AWS SDK를 사용한 제어 패널                ");
+            System.out.println("           Amazon AWS SDK Control Panel                   ");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  1. 인스턴스 목록             2. 가용 영역 확인          ");
-            System.out.println("  3. 인스턴스 시작             4. 가용 리전 확인          ");
-            System.out.println("  5. 인스턴스 중지             6. 인스턴스 생성           ");
-            System.out.println("  7. 인스턴스 재부팅           8. 이미지 목록 보기        ");
-            System.out.println("                             99. 종료                    ");
+            System.out.println("  1. List instances               2. Available zones       ");
+            System.out.println("  3. Start instance               4. Available regions     ");
+            System.out.println("  5. Stop instance                6. Create instance       ");
+            System.out.println("  7. Reboot instance              8. List images           ");
+            System.out.println("                             99. Quit                      ");
             System.out.println("------------------------------------------------------------");
             
-            System.out.print("숫자를 입력하세요: ");
+            System.out.print("Enter an integer: ");
             
             if (menu.hasNextInt()) {
                 number = menu.nextInt(); // 사용자가 입력한 메뉴 번호 저장
             } else {
-                System.out.println("유효한 숫자를 입력하세요.");
+                System.out.println("Please enter a valid integer.");
                 break;
             }
 
@@ -82,7 +84,7 @@ public class Main {
                     availableZones(); // 사용 가능한 가용 영역 표시
                     break;
                 case 3: 
-                    System.out.print("인스턴스 ID를 입력하세요: ");
+                    System.out.print("Enter instance id: ");
                     if (id_string.hasNext())
                         instance_id = id_string.nextLine();
                     if (!instance_id.trim().isEmpty()) 
@@ -92,14 +94,14 @@ public class Main {
                     availableRegions(); // 사용 가능한 AWS 리전 표시
                     break;
                 case 5: 
-                    System.out.print("인스턴스 ID를 입력하세요: ");
+                    System.out.print("Enter instance id: ");
                     if (id_string.hasNext())
                         instance_id = id_string.nextLine();
                     if (!instance_id.trim().isEmpty()) 
                         stopInstance(instance_id); // 특정 EC2 인스턴스 중지
                     break;
                 case 6: 
-                    System.out.print("AMI ID를 입력하세요: ");
+                    System.out.print("Enter AMI id: ");
                     String ami_id = "";
                     if (id_string.hasNext())
                         ami_id = id_string.nextLine();
@@ -107,7 +109,7 @@ public class Main {
                         createInstance(ami_id); // 새로운 EC2 인스턴스 생성
                     break;
                 case 7: 
-                    System.out.print("인스턴스 ID를 입력하세요: ");
+                    System.out.print("Enter instance id: ");
                     if (id_string.hasNext())
                         instance_id = id_string.nextLine();
                     if (!instance_id.trim().isEmpty()) 
@@ -117,19 +119,19 @@ public class Main {
                     listImages(); // 사용 가능한 AMI 목록 출력
                     break;
                 case 99: 
-                    System.out.println("프로그램을 종료합니다...");
+                    System.out.println("Exiting program...");
                     menu.close();
                     id_string.close();
                     return;
                 default: 
-                    System.out.println("유효하지 않은 선택입니다. 다시 시도하세요.");
+                    System.out.println("Invalid choice. Please try again.");
             }
         }
     }
 
     // 모든 EC2 인스턴스를 목록으로 출력
     public static void listInstances() {
-        System.out.println("인스턴스 목록을 가져오는 중...");
+        System.out.println("Listing instances...");
         boolean done = false; // 반복문 제어 변수
         DescribeInstancesRequest request = new DescribeInstancesRequest(); // 인스턴스 요청 객체
         
@@ -139,7 +141,7 @@ public class Main {
             for (Reservation reservation : response.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
                     System.out.printf(
-                        "[ID] %s, [AMI] %s, [타입] %s, [상태] %10s, [모니터링 상태] %s\n",
+                        "[ID] %s, [AMI] %s, [Type] %s, [State] %10s, [Monitoring State] %s\n",
                         instance.getInstanceId(),
                         instance.getImageId(),
                         instance.getInstanceType(),
@@ -156,73 +158,73 @@ public class Main {
 
     // 사용 가능한 가용 영역을 표시
     public static void availableZones() {
-        System.out.println("가용 영역을 가져오는 중...");
+        System.out.println("Fetching available zones...");
         try {
             DescribeAvailabilityZonesResult result = ec2.describeAvailabilityZones();
             for (AvailabilityZone zone : result.getAvailabilityZones()) {
-                System.out.printf("[ZoneID] %s, [Region] %s, [ZoneName] %s\n",
+                System.out.printf("[Zone ID] %s, [Region] %s, [Zone Name] %s\n",
                                   zone.getZoneId(), zone.getRegionName(), zone.getZoneName());
             }
         } catch (AmazonServiceException ase) {
-            System.out.println("가용 영역을 가져오는 중 오류 발생: " + ase.getMessage());
+            System.out.println("Error fetching zones: " + ase.getMessage());
         }
     }
 
     // 특정 EC2 인스턴스를 시작
     public static void startInstance(String instance_id) {
-        System.out.printf("인스턴스 %s를 시작하는 중...\n", instance_id);
+        System.out.printf("Starting instance %s...\n", instance_id);
         StartInstancesRequest request = new StartInstancesRequest()
             .withInstanceIds(instance_id); // 요청에 인스턴스 ID 추가
         ec2.startInstances(request); // 인스턴스 시작
-        System.out.printf("인스턴스 %s가 성공적으로 시작되었습니다.\n", instance_id);
+        System.out.printf("Successfully started instance %s\n", instance_id);
     }
 
     // 사용 가능한 AWS 리전을 표시
     public static void availableRegions() {
-        System.out.println("사용 가능한 리전을 가져오는 중...");
+        System.out.println("Fetching available regions...");
         DescribeRegionsResult regions_response = ec2.describeRegions(); // 리전 요청
         for (Region region : regions_response.getRegions()) {
-            System.out.printf("[리전] %15s, [엔드포인트] %s\n", region.getRegionName(), region.getEndpoint());
+            System.out.printf("[Region] %15s, [Endpoint] %s\n", region.getRegionName(), region.getEndpoint());
         }
     }
 
     // 특정 EC2 인스턴스를 중지
     public static void stopInstance(String instance_id) {
-        System.out.printf("인스턴스 %s를 중지하는 중...\n", instance_id);
+        System.out.printf("Stopping instance %s...\n", instance_id);
         StopInstancesRequest request = new StopInstancesRequest()
             .withInstanceIds(instance_id); // 요청에 인스턴스 ID 추가
         ec2.stopInstances(request); // 인스턴스 중지
-        System.out.printf("인스턴스 %s가 성공적으로 중지되었습니다.\n", instance_id);
+        System.out.printf("Successfully stopped instance %s\n", instance_id);
     }
 
     // AMI ID를 사용하여 새 EC2 인스턴스를 생성
     public static void createInstance(String ami_id) {
-        System.out.printf("AMI %s를 사용하여 새로운 인스턴스를 생성하는 중...\n", ami_id);
+        System.out.printf("Creating instance with AMI %s...\n", ami_id);
         RunInstancesRequest run_request = new RunInstancesRequest()
             .withImageId(ami_id) // AMI ID 설정
             .withInstanceType(InstanceType.T2Micro) // 인스턴스 타입 설정
             .withMaxCount(1).withMinCount(1); // 생성할 인스턴스 수 설정
         RunInstancesResult run_response = ec2.runInstances(run_request); // 인스턴스 생성 요청
         String reservation_id = run_response.getReservation().getInstances().get(0).getInstanceId();
-        System.out.printf("인스턴스 %s가 성공적으로 생성되었습니다.\n", reservation_id);
+        System.out.printf("Successfully created instance %s\n", reservation_id);
     }
 
     // 특정 EC2 인스턴스를 재부팅
     public static void rebootInstance(String instance_id) {
-        System.out.printf("인스턴스 %s를 재부팅하는 중...\n", instance_id);
+        System.out.printf("Rebooting instance %s...\n", instance_id);
         RebootInstancesRequest request = new RebootInstancesRequest()
             .withInstanceIds(instance_id); // 요청에 인스턴스 ID 추가
         ec2.rebootInstances(request); // 인스턴스 재부팅 요청
-        System.out.printf("인스턴스 %s가 성공적으로 재부팅되었습니다.\n", instance_id);
+        System.out.printf("Successfully rebooted instance %s\n", instance_id);
     }
 
     // 사용 가능한 AMI 목록을 출력
     public static void listImages() {
-        System.out.println("이미지 목록을 가져오는 중...");
+        System.out.println("Listing images...");
         DescribeImagesRequest request = new DescribeImagesRequest(); // 이미지 요청 객체
         DescribeImagesResult results = ec2.describeImages(request); // 이미지 정보 요청
         for (Image image : results.getImages()) {
-            System.out.printf("[ImageID] %s, [Name] %s, [Owner] %s\n", 
+            System.out.printf("[Image ID] %s, [Name] %s, [Owner] %s\n", 
                               image.getImageId(), image.getName(), image.getOwnerId());
         }
     }
