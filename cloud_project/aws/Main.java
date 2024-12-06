@@ -182,13 +182,20 @@ public class Main {
         System.out.printf("Successfully started instance %s\n", instance_id);
     }
 
-    // 사용 가능한 AWS 리전을 표시
+     // 사용 가능한 AWS 리전을 표시
+     public static void availableRegions() {
+        try {
+            System.out.println("Fetching available regions...");
+            DescribeRegionsResult regions_response = ec2.describeRegions(); // 리전 요청
     
-    public static void availableRegions() {
-        System.out.println("Fetching available regions...");
-        DescribeRegionsResult regions_response = ec2.describeRegions(); // 리전 요청
-        for (Region region : regions_response.getRegions()) {
-            System.out.printf("[Region] %15s, [Endpoint] %s\n", region.getRegionName(), region.getEndpoint());
+            for (Region region : regions_response.getRegions()) { // AWS SDK Region 클래스 사용
+                System.out.printf("[Region] %15s, [Endpoint] %s\n", 
+                                  region.getRegionName(), 
+                                  region.getEndpoint());
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching regions: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
