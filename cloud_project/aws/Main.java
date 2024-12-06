@@ -231,20 +231,27 @@ public class Main {
 
     // 사용 가능한 AMI 목록을 출력
     public static void listImages() {
-        System.out.println("Listing images...");
-        DescribeImagesRequest request = new DescribeImagesRequest(); // 이미지 요청 객체
-        DescribeImagesResult results = ec2.describeImages(request); // 이미지 정보 요청우
+        try {
+            System.out.println("Fetching specific images...");
+            DescribeImagesRequest request = new DescribeImagesRequest().withOwners("self"); // 현재 계정 소유 AMI만 검색
+            
+            DescribeImagesResult results = ec2.describeImages(request);
 
-        // 예외 처리: 이미지가 없는 경우
-        if (results.getImages().isEmpty()) {
-             System.out.println("No images found.");
-            return;
-        }              
-
-        for (Image image : results.getImages()) {
-            System.out.printf("[Image ID] %s, [Name] %s, [Owner] %s\n", 
-                              image.getImageId(), image.getName(), image.getOwnerId());
+            // 예외처리: 이미지가 없는 경우
+            if (results.getImages().isEmpty()) {
+                System.out.println("No images found.");
+                return;
+            }
+    
+            for (Image image : results.getImages()) {
+                System.out.printf("[Image ID] %s, [Name] %s, [Owner] %s\n",
+                                  image.getImageId(), image.getName(), image.getOwnerId());
+            }
+        } catch (Exception e) {
+            System.err.println("Error during describeImages: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+    
 }
 
