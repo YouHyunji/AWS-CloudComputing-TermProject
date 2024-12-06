@@ -11,6 +11,9 @@ package aws;
 
 import java.util.Iterator;
 import java.util.Scanner;
+
+//import javax.swing.plaf.synth.Region;
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -180,6 +183,7 @@ public class Main {
     }
 
     // 사용 가능한 AWS 리전을 표시
+    
     public static void availableRegions() {
         System.out.println("Fetching available regions...");
         DescribeRegionsResult regions_response = ec2.describeRegions(); // 리전 요청
@@ -222,7 +226,14 @@ public class Main {
     public static void listImages() {
         System.out.println("Listing images...");
         DescribeImagesRequest request = new DescribeImagesRequest(); // 이미지 요청 객체
-        DescribeImagesResult results = ec2.describeImages(request); // 이미지 정보 요청
+        DescribeImagesResult results = ec2.describeImages(request); // 이미지 정보 요청우
+
+        // 예외 처리: 이미지가 없는 경우
+        if (results.getImages().isEmpty()) {
+             System.out.println("No images found.");
+            return;
+        }              
+
         for (Image image : results.getImages()) {
             System.out.printf("[Image ID] %s, [Name] %s, [Owner] %s\n", 
                               image.getImageId(), image.getName(), image.getOwnerId());
