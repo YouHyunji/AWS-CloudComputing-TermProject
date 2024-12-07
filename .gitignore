@@ -4,3 +4,8 @@ etclib/
 http/
 jackson/
 
+# Build Files
+*.class
+*.jar
+build/
+target/
