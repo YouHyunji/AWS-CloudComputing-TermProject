@@ -14,8 +14,6 @@ import java.util.Scanner;
 
 import javax.swing.plaf.synth.Region;
 
-//import javax.swing.plaf.synth.Region;
-
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -190,11 +188,12 @@ public class Main {
             System.out.println("Fetching available regions...");
             DescribeRegionsResult regions_response = ec2.describeRegions(); // 리전 요청
     
-            for (Region region : regions_response.getRegions()) { // AWS SDK Region 클래스 사용
+            for (com.amazonaws.services.ec2.model.Region region : regions_response.getRegions()) {
                 System.out.printf("[Region] %15s, [Endpoint] %s\n", 
                                   region.getRegionName(), 
                                   region.getEndpoint());
             }
+            
         } catch (Exception e) {
             System.err.println("Error fetching regions: " + e.getMessage());
             e.printStackTrace();
