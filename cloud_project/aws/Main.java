@@ -12,6 +12,8 @@ package aws;
 import java.util.Iterator;
 import java.util.Scanner;
 
+import javax.swing.plaf.synth.Region;
+
 //import javax.swing.plaf.synth.Region;
 
 import com.amazonaws.AmazonClientException;
@@ -221,13 +223,29 @@ public class Main {
     }
 
     // 특정 EC2 인스턴스를 재부팅
-    public static void rebootInstance(String instance_id) {
-        System.out.printf("Rebooting instance %s...\n", instance_id);
-        RebootInstancesRequest request = new RebootInstancesRequest()
-            .withInstanceIds(instance_id); // 요청에 인스턴스 ID 추가
-        ec2.rebootInstances(request); // 인스턴스 재부팅 요청
-        System.out.printf("Successfully rebooted instance %s\n", instance_id);
+public static void rebootInstance(String instance_id) {
+    System.out.printf("Checking the status of instance %s...\n", instance_id);
+
+    // 예외처리: 인스턴스가 중지된 상태일 경우 메시지 출력
+    // 인스턴스 상태 확인
+    DescribeInstancesRequest describeRequest = new DescribeInstancesRequest()
+        .withInstanceIds(instance_id);
+    DescribeInstancesResult describeResult = ec2.describeInstances(describeRequest);
+
+    String instanceState = describeResult.getReservations().get(0).getInstances().get(0).getState().getName();
+
+    if (instanceState.equalsIgnoreCase("stopped")) {
+        System.out.printf("Instance %s is currently stopped. Reboot is not possible.\n", instance_id);
+        return;
     }
+
+    // 인스턴스가 실행 중이면 재부팅 요청
+    System.out.printf("Rebooting instance %s...\n", instance_id);
+    RebootInstancesRequest request = new RebootInstancesRequest()
+        .withInstanceIds(instance_id); // 요청에 인스턴스 ID 추가
+    ec2.rebootInstances(request); // 인스턴스 재부팅 요청
+    System.out.printf("Successfully rebooted instance %s\n", instance_id);
+}
 
     // 사용 가능한 AMI 목록을 출력
     public static void listImages() {
