@@ -3,5 +3,6 @@
 
     /awssdk
     /etclib
+    + JSch(Java Secure Channel): SSH을 사용하기 위한 라이브러리
     /http
     /jackson
