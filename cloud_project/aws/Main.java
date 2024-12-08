@@ -64,6 +64,7 @@ public class Main {
             System.out.println("  3. Start instance               4. Available regions     ");
             System.out.println("  5. Stop instance                6. Create instance       ");
             System.out.println("  7. Reboot instance              8. List images           ");
+            System.out.println("  9. SSH to an instance           10. Start AutoScaling     ");
             System.out.println("                             99. Quit                      ");
             System.out.println("------------------------------------------------------------");
             
@@ -120,6 +121,18 @@ public class Main {
                     break;
                 case 8: 
                     listImages(); // 사용 가능한 AMI 목록 출력
+                    break;
+                case 9:
+                    System.out.print("SSH 접속할 인스턴스 ID를 입력하세요: ");
+                    if(id_string.hasNext())
+                        instance_id = id_string.nextLine();
+                    if (!instance_id.trim().isEmpty()) 
+                        sshToInstance(instance_id); // SSH 접속 기능
+                    break;
+                case 10: // 오토스케일링 실행
+                    System.out.println("Start AutoScaling...");
+                    autoScaler.selectAmi();
+                    autoScaler.autoScaling(); // 필요한 정보는 AutoScaler 내부에서 환경 변수로 처리
                     break;
                 case 99: 
                     System.out.println("Exiting program...");
@@ -269,6 +282,46 @@ public static void rebootInstance(String instance_id) {
             e.printStackTrace();
         }
     }
+
+
+    // 9. 인스턴스 ID를 기반으로 SSH 접속
+    // 일일이 SSH 명령문을 복사, 붙여넣기 해야 하는 번거로움을 해결하기 위해 추가
+    private static void sshToInstance(String instanceId) {
+        try {
+            // 환경 변수에서 키 파일 경로 가져오기
+            String privateKeyPath = System.getenv("AWS_KEY_PATH");
+            if (privateKeyPath == null || privateKeyPath.isEmpty()) {
+                System.out.println("환경 변수 'AWS_KEY_PATH'가 설정되지 않았습니다. 프로그램을 종료합니다.");
+                return;
+            }
+    
+            // EC2 인스턴스 정보 가져오기
+            DescribeInstancesRequest request = new DescribeInstancesRequest().withInstanceIds(instanceId);
+            DescribeInstancesResult response = ec2.describeInstances(request);
+            Instance instance = response.getReservations().get(0).getInstances().get(0);
+    
+            // 퍼블릭 IP 확인
+            String publicIp = instance.getPublicIpAddress();
+            if (publicIp == null) {
+                System.out.println("선택한 인스턴스에 퍼블릭 IP가 설정되어 있지 않습니다.");
+                return;
+            }
+    
+            // SSH 접속 명령 실행 후 터미널 띄우기
+            System.out.println("인스턴스에 SSH 터미널 접속을 시도합니다...");
+            String sshCommand = String.format("ssh -i %s ec2-user@%s", privateKeyPath, publicIp);
+            ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", sshCommand);
+            processBuilder.inheritIO(); // 현재 터미널로 I/O를 연결
+            Process process = processBuilder.start();
+            process.waitFor(); // 터미널 세션이 끝날 때까지 대기
+        } catch (AmazonServiceException e) {
+            System.out.println("인스턴스를 찾을 수 없습니다. 인스턴스 ID를 확인하세요.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("SSH 접속 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     
 }
-
