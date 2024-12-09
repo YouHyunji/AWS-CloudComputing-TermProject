@@ -65,7 +65,7 @@ public class Main {
             System.out.println("  3. Start instance               4. Available regions     ");
             System.out.println("  5. Stop instance                6. Create instance       ");
             System.out.println("  7. Reboot instance              8. List images           ");
-            System.out.println("  9. Add tag to instance           10. Start AutoScaling     ");
+            System.out.println("  9. Add tag to instance          10. SSH Connection (ID/Tag)");
             System.out.println("                             99. Quit                      ");
             System.out.println("------------------------------------------------------------");
             
