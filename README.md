@@ -1,4 +1,5 @@
 # AWS 동적 자원 관리 프로그램
+![image](https://github.com/user-attachments/assets/f5c132a2-542c-41cf-9b93-563270064a37)
 <br />
 
 ## **📝 프로젝트 개요**
@@ -9,22 +10,20 @@ EC2 인스턴스의 생성, 시작, 중지, 상태 확인, 태그 추가 등 주
 
 <br />
 
-![image](https://github.com/user-attachments/assets/f5c132a2-542c-41cf-9b93-563270064a37)
-
 <br />
 
 ## 👉 메뉴 소개
 
-**1. List instance:** EC2 인스턴스 조회
-**2. Available zones:** 현재 Region의 가용 영역 목록 조회
-**3. Start instance:** 선택한 인스턴스 시작
-**4. Available regions:** Region 목록 확인
-**5. Stop instance:** 선택한 인스턴스 중지
-**6. Create instance:** AMI로 새로운 EC2 인스턴스 생성
-**7. Reboot instance:** 선택한 인스턴스 재부팅
-**8. List images:** 현재 계정의 AMI 목록 조회
-**9. Add tag to instance:** 선택한 인스턴스에 태그 추가
-**10. SSH Connection(ID/Tag):** 인스턴스 ID, Tag로 SSH 접속
+**1. List instance:** EC2 인스턴스 조회 <br />
+**2. Available zones:** 현재 Region의 가용 영역 목록 조회 <br />
+**3. Start instance:** 선택한 인스턴스 시작<br />
+**4. Available regions:** Region 목록 확인<br />
+**5. Stop instance:** 선택한 인스턴스 중지<br />
+**6. Create instance:** AMI로 새로운 EC2 인스턴스 생성<br />
+**7. Reboot instance:** 선택한 인스턴스 재부팅<br />
+**8. List images:** 현재 계정의 AMI 목록 조회<br />
+**9. Add tag to instance:** 선택한 인스턴스에 태그 추가<br />
+**10. SSH Connection(ID/Tag):** 인스턴스 ID, Tag로 SSH 접속<br />
 <br />
 
 ## 👉 주요 기능
