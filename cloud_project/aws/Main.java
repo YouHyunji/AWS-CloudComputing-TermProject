@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.Scanner;
 
 import javax.swing.plaf.synth.Region;
+import javax.swing.text.html.HTML.Tag;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -64,7 +65,7 @@ public class Main {
             System.out.println("  3. Start instance               4. Available regions     ");
             System.out.println("  5. Stop instance                6. Create instance       ");
             System.out.println("  7. Reboot instance              8. List images           ");
-            System.out.println("  9. SSH to an instance           10. Start AutoScaling     ");
+            System.out.println("  9. Add tag to instance           10. Start AutoScaling     ");
             System.out.println("                             99. Quit                      ");
             System.out.println("------------------------------------------------------------");
             
@@ -123,13 +124,33 @@ public class Main {
                     listImages(); // 사용 가능한 AMI 목록 출력
                     break;
                 case 9:
+                    System.out.print("Enter instance ID: ");
+                    instance_id = id_string.nextLine(); // Instance ID 입력받기
+            
+                    if (!instance_id.trim().isEmpty()) { // Instance ID가 비어 있지 않은 경우에만 실행
+                        System.out.print("Enter tag key: ");
+                        String tagKey = id_string.nextLine(); // Tag Key 입력받기
+            
+                        System.out.print("Enter tag value: ");
+                        String tagValue = id_string.nextLine(); // Tag Value 입력받기
+            
+                    if (!tagKey.trim().isEmpty() && !tagValue.trim().isEmpty()) { // Tag Key와 Value 모두 유효성 확인
+                        addTagToInstance(instance_id, tagKey, tagValue); // 태그 추가 메서드 호출
+                    } else {
+                        System.out.println("Tag key or value cannot be empty.");
+                    }
+                } else {
+                    System.out.println("Instance ID cannot be empty.");
+                }
+                break;
+                case 10:
                     System.out.print("SSH 접속할 인스턴스 ID를 입력하세요: ");
                     if(id_string.hasNext())
                         instance_id = id_string.nextLine();
                     if (!instance_id.trim().isEmpty()) 
                         sshToInstance(instance_id); // SSH 접속 기능
                     break;
-                case 10: // 오토스케일링 실행
+                case 11: // 오토스케일링 실행
                     System.out.println("Start AutoScaling...");
                     autoScaler.selectAmi();
                     autoScaler.autoScaling(); // 필요한 정보는 AutoScaler 내부에서 환경 변수로 처리
@@ -283,8 +304,36 @@ public static void rebootInstance(String instance_id) {
         }
     }
 
+    // 9. 태그를 인스턴스에 추가하는 기능
+    private static void addTagToInstance(String instanceId, String tagKey, String tagValue) {
+        try {
 
-    // 9. 인스턴스 ID를 기반으로 SSH 접속
+        // AWS SDK의 Tag 객체 생성
+        com.amazonaws.services.ec2.model.Tag instance_tag = new com.amazonaws.services.ec2.model.Tag()
+                .withKey(tagKey)
+                .withValue(tagValue);
+
+        // 태그 추가 요청 생성
+        CreateTagsRequest request = new CreateTagsRequest()
+                .withResources(instanceId)
+                .withTags(instance_tag);
+
+        // 태그 생성 요청 실행
+        ec2.createTags(request);
+        System.out.println("Successfully added tag [" + tagKey + " : " + tagValue + "] to instance " + instanceId);
+    } catch (AmazonServiceException e) {
+        System.out.println("Error adding tag: " + e.getMessage());
+        e.printStackTrace();
+    } catch (Exception e) {
+        System.out.println("Unexpected error: " + e.getMessage());
+        e.printStackTrace();
+    }
+    }
+    
+    
+
+
+    // 10. 태그를 기반으로 인스턴스에 SSH 접속하는 기능
     // 일일이 SSH 명령문을 복사, 붙여넣기 해야 하는 번거로움을 해결하기 위해 추가
     private static void sshToInstance(String instanceId) {
         try {
