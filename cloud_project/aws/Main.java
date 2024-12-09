@@ -174,24 +174,43 @@ public class Main {
         
         while (!done) {
             DescribeInstancesResult response = ec2.describeInstances(request); // EC2 인스턴스 정보 요청
-
+    
             for (Reservation reservation : response.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
+                    // 인스턴스 정보 출력
                     System.out.printf(
                         "[ID] %s, [AMI] %s, [Type] %s, [State] %10s, [Monitoring State] %s\n",
                         instance.getInstanceId(),
                         instance.getImageId(),
                         instance.getInstanceType(),
                         instance.getState().getName(),
-                        instance.getMonitoring().getState());
+                        instance.getMonitoring().getState()
+                    );
+    
+                    // 태그 정보를 한 줄로 출력
+                    if (instance.getTags() != null && !instance.getTags().isEmpty()) {
+                        StringBuilder tagsString = new StringBuilder();
+                        for (com.amazonaws.services.ec2.model.Tag tag : instance.getTags()) {
+                            tagsString.append(String.format("%s: %s, ", tag.getKey(), tag.getValue()));
+                        }
+                        // 마지막 ", " 제거
+                        if (tagsString.length() > 2) {
+                            tagsString.setLength(tagsString.length() - 2);
+                        }
+                        System.out.println("[Tags] " + tagsString.toString());
+                    } else {
+                        System.out.println("[Tags] No tags available.");
+                    }
                 }
             }
+    
             request.setNextToken(response.getNextToken()); // 다음 페이지의 토큰 설정
             if (response.getNextToken() == null) {
                 done = true; // 모든 페이지를 처리했으면 반복 종료
             }
         }
     }
+    
 
     // 사용 가능한 가용 영역을 표시
     public static void availableZones() {
