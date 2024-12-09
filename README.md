@@ -36,7 +36,7 @@ EC2 인스턴스의 생성, 시작, 중지, 상태 확인, 태그 추가 등 주
 
 - **EC2 인스턴스 태그 추가:** <br />
 EC2 인스턴스 ID를 입력하여 태그(Key-Value) 추가<br />
-1. List instance 메뉴를 통해 각 인스턴스의 태그 확인 가능
+1. List instance 메뉴를 통해 각 인스턴스의 태그 확인 가능<br />
 
 - **EC2 인스턴스 ID,TAG로 SSH 접속** <br />
 인스턴스 ID 또는 태그(Key-Value)를 입력하여 SSH 접속 <br />
