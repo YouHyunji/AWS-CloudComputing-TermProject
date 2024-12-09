@@ -10,6 +10,7 @@ package aws;
  */
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.swing.plaf.synth.Region;
@@ -142,14 +143,42 @@ public class Main {
                 } else {
                     System.out.println("Instance ID cannot be empty.");
                 }
-                break;
-                case 10:
-                    System.out.print("SSH 접속할 인스턴스 ID를 입력하세요: ");
-                    if(id_string.hasNext())
-                        instance_id = id_string.nextLine();
-                    if (!instance_id.trim().isEmpty()) 
-                        sshToInstance(instance_id); // SSH 접속 기능
                     break;
+                case 10:
+                    System.out.println("How would you like to connect via SSH?");
+                    System.out.println("1. By Instance ID");
+                    System.out.println("2. By Tag");
+                    System.out.print("Enter your choice (1 or 2): ");
+
+                    int choice = menu.nextInt(); // 사용자 입력
+                    menu.nextLine(); // 입력 버퍼 정리
+
+                    if (choice == 1) {
+                    // ID 기반 SSH 접속
+                    System.out.print("Enter instance ID: ");
+                    instance_id = menu.nextLine();
+                        if (!instance_id.trim().isEmpty()) {
+                        sshToInstanceById(instance_id); // ID 기반 SSH 접속
+                        } else {
+                    System.out.println("Instance ID cannot be empty.");
+                        }
+                    } else if (choice == 2) {
+                    // 태그 기반 SSH 접속
+                    System.out.print("Enter tag key: ");
+                    String tagKey = menu.nextLine();
+                    System.out.print("Enter tag value: ");
+                    String tagValue = menu.nextLine();
+
+                    if (!tagKey.trim().isEmpty() && !tagValue.trim().isEmpty()) {
+                        sshToInstanceByTag(tagKey, tagValue); // 태그 기반 SSH 접속
+                    } else {
+                        System.out.println("Tag key or value cannot be empty.");
+                    }
+                } else {
+                System.out.println("Invalid choice. Please select 1 or 2.");
+            }
+                    break;
+                    
                 case 11: // 오토스케일링 실행
                     System.out.println("Start AutoScaling...");
                     autoScaler.selectAmi();
@@ -339,20 +368,57 @@ public static void rebootInstance(String instance_id) {
 
         // 태그 생성 요청 실행
         ec2.createTags(request);
-        System.out.println("Successfully added tag [" + tagKey + " : " + tagValue + "] to instance " + instanceId);
-    } catch (AmazonServiceException e) {
-        System.out.println("Error adding tag: " + e.getMessage());
-        e.printStackTrace();
-    } catch (Exception e) {
-        System.out.println("Unexpected error: " + e.getMessage());
-        e.printStackTrace();
+            System.out.println("Successfully added tag [" + tagKey + " : " + tagValue + "] to instance " + instanceId);
+        } catch (AmazonServiceException e) {
+            System.out.println("Error adding tag: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-    }
-    
-    
 
 
-    // 10. 태그를 기반으로 인스턴스에 SSH 접속하는 기능
+    // 10-1. 인스턴스 ID를 기반으로 SSH 접속
+    // 일일이 SSH 명령문을 복사, 붙여넣기 해야 하는 번거로움을 해결하기 위해 추가
+    private static void sshToInstanceById(String instanceId) {
+        try {
+            // 환경 변수에서 키 파일 경로 가져오기
+            String privateKeyPath = System.getenv("AWS_KEY_PATH");
+            if (privateKeyPath == null || privateKeyPath.isEmpty()) {
+                System.out.println("환경 변수 'AWS_KEY_PATH'가 설정되지 않았습니다. 프로그램을 종료합니다.");
+                return;
+            }
+    
+            // EC2 인스턴스 정보 가져오기
+            DescribeInstancesRequest request = new DescribeInstancesRequest().withInstanceIds(instanceId);
+            DescribeInstancesResult response = ec2.describeInstances(request);
+            Instance instance = response.getReservations().get(0).getInstances().get(0);
+    
+            // 퍼블릭 IP 확인
+            String publicIp = instance.getPublicIpAddress();
+            if (publicIp == null) {
+                System.out.println("선택한 인스턴스에 퍼블릭 IP가 설정되어 있지 않습니다.");
+                return;
+            }
+    
+            // SSH 접속 명령 실행 후 터미널 띄우기
+            System.out.println("인스턴스에 SSH 터미널 접속을 시도합니다...");
+            String sshCommand = String.format("ssh -i %s ec2-user@%s", privateKeyPath, publicIp);
+            ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", sshCommand);
+            processBuilder.inheritIO(); // 현재 터미널로 I/O를 연결
+            Process process = processBuilder.start();
+            process.waitFor(); // 터미널 세션이 끝날 때까지 대기
+        } catch (AmazonServiceException e) {
+            System.out.println("인스턴스를 찾을 수 없습니다. 인스턴스 ID를 확인하세요.");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("SSH 접속 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // 10-1. 인스턴스 ID를 기반으로 SSH 접속
     // 일일이 SSH 명령문을 복사, 붙여넣기 해야 하는 번거로움을 해결하기 위해 추가
     private static void sshToInstance(String instanceId) {
         try {
@@ -390,6 +456,61 @@ public static void rebootInstance(String instance_id) {
             e.printStackTrace();
         }
     }
+
+    // 10-2. "태그"를 기반으로 인스턴스에 SSH 접속하는 기능
+    private static void sshToInstanceByTag(String tagKey, String tagValue) {
+        try {
+            // 태그 필터 생성
+            Filter tagFilter = new Filter()
+                    .withName("tag:" + tagKey) // 필터 이름 설정
+                    .withValues(tagValue);    // 필터 값 설정
     
+            // EC2 인스턴스 조회 요청
+            DescribeInstancesRequest request = new DescribeInstancesRequest()
+                    .withFilters(tagFilter); // 태그 필터 추가
+    
+            // EC2 인스턴스 조회 결과
+            DescribeInstancesResult response = ec2.describeInstances(request);
+    
+            // 첫 번째 인스턴스 가져오기
+            List<Reservation> reservations = response.getReservations();
+            if (reservations.isEmpty()) {
+                System.out.println("No instances found with the specified tag.");
+                return;
+            }
+    
+            Instance instance = reservations.get(0).getInstances().get(0);
+    
+            // 퍼블릭 IP 가져오기
+            String publicIp = instance.getPublicIpAddress();
+            if (publicIp == null) {
+                System.out.println("The instance does not have a public IP.");
+                return;
+            }
+    
+            // SSH 접속 명령 실행 후 터미널 띄우기
+            System.out.println("Connecting to instance with IP: " + publicIp);
+            String privateKeyPath = System.getenv("AWS_KEY_PATH");
+            if (privateKeyPath == null || privateKeyPath.isEmpty()) {
+                System.out.println("Environment variable 'AWS_KEY_PATH' is not set.");
+                return;
+            }
+    
+            // SSH 명령 생성
+            String sshCommand = String.format("ssh -i %s ec2-user@%s", privateKeyPath, publicIp);
+    
+            // 터미널에서 SSH 실행
+            ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", sshCommand);
+            processBuilder.inheritIO(); // 현재 터미널로 I/O 연결
+            Process process = processBuilder.start();
+            process.waitFor(); // 사용자가 SSH 세션을 종료할 때까지 대기
+        } catch (AmazonServiceException e) {
+            System.out.println("Error retrieving instances: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Error during SSH connection: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }   
     
 }
